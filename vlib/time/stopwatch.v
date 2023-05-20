@@ -13,8 +13,8 @@ pub struct StopWatch {
 mut:
 	elapsed u64
 pub mut:
-	start u64
-	end   u64
+	start ?u64
+	end   ?u64
 }
 
 // new_stopwatch initializes a new StopWatch with the current time as start.
@@ -26,20 +26,20 @@ pub fn new_stopwatch(opts StopWatchOptions) StopWatch {
 	return StopWatch{
 		elapsed: 0
 		start: initial
-		end: 0
+		end: none
 	}
 }
 
 // start starts the stopwatch. If the timer was paused, restarts counting.
 pub fn (mut t StopWatch) start() {
 	t.start = sys_mono_now()
-	t.end = 0
+	t.end = none
 }
 
 // restart restarts the stopwatch. If the timer was paused, restarts counting.
 pub fn (mut t StopWatch) restart() {
 	t.start = sys_mono_now()
-	t.end = 0
+	t.end = none
 	t.elapsed = 0
 }
 
@@ -50,23 +50,24 @@ pub fn (mut t StopWatch) stop() {
 
 // pause resets the `start` time and adds the current elapsed time to `elapsed`.
 pub fn (mut t StopWatch) pause() {
-	if t.start > 0 {
-		if t.end == 0 {
-			t.elapsed += sys_mono_now() - t.start
+	if start := t.start {
+		if end := t.end {
+			t.elapsed += end - start
 		} else {
-			t.elapsed += t.end - t.start
+			t.elapsed += sys_mono_now() - start
 		}
 	}
-	t.start = 0
+	t.start = none
+	t.end = none
 }
 
 // elapsed returns the Duration since the last start call
 pub fn (t StopWatch) elapsed() Duration {
-	if t.start > 0 {
-		if t.end == 0 {
-			return Duration(i64(sys_mono_now() - t.start + t.elapsed))
+	if start := t.start {
+		if end := t.end {
+			return Duration(i64(end - start + t.elapsed))
 		} else {
-			return Duration(i64(t.end - t.start + t.elapsed))
+			return Duration(i64(sys_mono_now() - start + t.elapsed))
 		}
 	}
 	return Duration(i64(t.elapsed))
